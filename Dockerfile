@@ -1,4 +1,4 @@
-FROM FROM eclipse-temurin:17-jdk-jammy
+FROM eclipse-temurin:17-jdk-jammy
 WORKDIR /app
 COPY target/jenkins-demo-1.0.jar app.jar
 EXPOSE 8080
