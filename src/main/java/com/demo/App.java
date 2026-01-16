@@ -13,7 +13,8 @@ public class App {
     public String home() {
         return "Hello from Maven Jenkins Pipeline!";
     }
-
+	
+	//Adding this comment just to commit
     public static void main(String[] args) {
         SpringApplication.run(App.class, args);
     }
