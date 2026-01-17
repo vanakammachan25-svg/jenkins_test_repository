@@ -1,61 +1,49 @@
 pipeline {
-    agent any
-    
-    tools{
-        maven 'maven-3.9.6'
-    }
-    
-    environment {
-          IMAGE_NAME = 'deepakrj1999/deepakrj1999-sampleapplication'
-          IMAGE_TAG  = '1.1'
-    }
+  agent any
 
-    stages {
-        stage('Git Clone') {
-            steps {
-                //git 'https://github.com/vanakammachan25-svg/jenkins_test_repository.git'
-                 git branch: 'main', url: 'https://github.com/vanakammachan25-svg/jenkins_test_repository.git'
-            }
-        }
-        
-        stage('Build'){
-            steps {
-                sh 'mvn clean install'
-            }
-        }
-        stage('Docker build'){
-            steps {
-                sh 'docker build -t $IMAGE_NAME:$IMAGE_TAG .'
-            }
-        }
-        stage('Docker Push') {
+  stages {
+
+    stage('Checkout') {
       steps {
-        withCredentials([usernamePassword(
-          credentialsId: 'dockerhub-creds',
-          usernameVariable: 'DOCKER_USER',
-          passwordVariable: 'DOCKER_PASS'
-        )]) {
-          sh '''
-            echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin
-            docker push $IMAGE_NAME:$IMAGE_TAG
-          '''
-        }
+        git branch: 'main',
+            url: 'https://github.com/<your-username>/terraform-jenkins-local-demo.git'
       }
     }
-    stage('Docker Container Run'){
-        steps{
-            sh '''
-                  docker pull $IMAGE_NAME:$IMAGE_TAG || true
-                
-                  docker stop samplewebapp1 || true
-                  docker rm samplewebapp1 || true
-                
-                  docker run -d \
-                    --name samplewebapp1 \
-                    -p 9090:8080 \
-                    $IMAGE_NAME:$IMAGE_TAG
-                '''
-        }
+
+    stage('Terraform Init') {
+      steps {
+        sh 'terraform init -input=false'
+      }
     }
-   }
+
+    stage('Terraform Validate') {
+      steps {
+        sh 'terraform validate'
+      }
+    }
+
+    stage('Terraform Security Scan') {
+      steps {
+        sh 'tfsec .'
+      }
+    }
+
+    stage('Terraform Plan') {
+      steps {
+        sh 'terraform plan -out=tfplan'
+      }
+    }
+
+    stage('Approval') {
+      steps {
+        input message: 'Approve Terraform Apply?'
+      }
+    }
+
+    stage('Terraform Apply') {
+      steps {
+        sh 'terraform apply -auto-approve tfplan'
+      }
+    }
+  }
 }
